@@ -1,0 +1,82 @@
+#!/bin/bash
+
+#Script will ping appropriate servers for input project, report latency, and ensure correct submission receives full credit
+
+#To do: More thorough server statistics (iperf, netperf?), lab testing as necessary, ?
+
+#Requires project folders in same directory ./proj_1, ./proj_2, ./proj_3, etc
+
+#Example usage: ./run_test proj 5
+#		./run_test lab 3
+
+
+#expected grade for each project
+project_grades=("50" "75" "85" "70" "125" "75")
+
+echo "Testing. . ."
+echo "$1: $2"
+
+
+#Check alive, also a good baseline measurement
+latency=$(ping -c 3 google.com | tac | head -n 1 | tr '/' '\n' | egrep "[0-9]+(\.[0-9]*)" | awk 'NR==2')
+if ! echo $latency | egrep -q "[0-9]+(\.[0-9]*)" ; then
+	echo "Could not reach google.com"
+	echo "Terminating. . . "
+	exit 1
+fi
+echo "latency to google.com: $latency ms"
+
+
+
+#Check project folder exists
+if [ -d $1_$2 ] ; then
+	if [ "$1" = "proj" ] ; then
+
+		latency=$(ping -c 3 netsec.cs.northwestern.edu | tac | head -n 1 | tr '/' '\n' | egrep "[0-9]+(\.[0-9]*)" | awk 'NR==2')
+		if ! echo $latency | egrep -q "[0-9]+(\.[0-9]*)" ; then
+			echo "Unable to ping netsec.cs.northwestern.edu"
+		fi
+		echo "latency to netsec.cs.northwestern.edu: $latency ms"
+
+		# iperf to check throughput? 
+		
+
+		#project 2 check netsec-playground
+		if [ "$2" -eq "2" ] ; then 
+			latency=$(ping -c 3 netsec-playground.cs.northwestern.edu | tac | head -n 1 | tr '/' '\n' | egrep "[0-9]+(\.[0-9]*)" | awk 'NR==2')
+			if ! echo $latency | egrep -q "[0-9]+(\.[0-9]*)" ; then
+				echo "Unable to ping netsec-playground.cs.northwestern.edu"
+			fi
+			echo "latency to netsec-playground.cs.northwestern.edu: $latency ms"
+		fi
+
+		
+		#projects 3, 4, 5 check netsec-projects through netsec
+		if [[ "$2" -eq "3" || "$2" -eq "4" || "$2" -eq "5" ]] ; then
+			latency=$(ssh netsec.cs.northwestern.edu 'ping -c 3 netsec-projects.cs.northwestern.edu' | tac | head -n 1 | tr '/' '\n' | egrep "[0-9]+(\.[0-9]*)" | awk 'NR==2')
+                        if ! echo $latency | egrep -q "[0-9]+(\.[0-9]*)" ; then
+                                echo "Unable to ping netsec-projects.cs.northwestern.edu"
+                        fi
+                        echo "latency to netsec-projects.cs.northwestern.edu: $latency ms"
+		fi
+
+		#run submit script
+		cd ./$1_$2/
+		echo "Enter username and password: "
+		result=$(./submit)
+	
+		#if receives full points
+		if ! echo $result | egrep -q "${project_grades[$2 - 1]}/${project_grades[$2 - 1]}" ; then
+			echo "Submission failed"
+		else
+			echo "Submission successful!"
+		fi
+	fi
+
+	#not implemented
+	if [ "$1" = "lab" ] ; then
+		sleep 1
+	fi
+else
+	echo "submission files do not exist"
+fi
