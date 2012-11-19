@@ -1,0 +1,12 @@
+Started two vms with vmware:
+	One being a standard linux mint vm that I had installed nessus on
+	The other was a vm image of metaploitable 2. 
+
+Checked both ips, and scanned one with the other, took about 2.5 hours, uploaded the report as well.
+
+Lots of exploits to use. Also, since we won't be telling students to actually scan the machine but will be giving them the report, we can only show some of the vulnerabilities, so it isn't too easy.
+
+
+Next:
+
+need to make this doable from the command line, and automate it
