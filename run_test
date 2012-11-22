@@ -13,6 +13,9 @@
 #expected grade for each project
 project_grades=("50" "75" "85" "70" "125" "75")
 
+proj3_ports=("3001" "3002" "3003" "3010" "3020" "3030" "3100" "3200" "3300")
+proj4_ports=("4001") #not sure what these are
+
 echo "Testing. . ."
 echo "$1: $2"
 
@@ -51,13 +54,27 @@ if [ -d $1_$2 ] ; then
 		fi
 
 		
-		#projects 3, 4, 5 check netsec-projects through netsec
+		#projects 3, 4, 5 check netsec-projects
 		if [[ "$2" -eq "3" || "$2" -eq "4" || "$2" -eq "5" ]] ; then
-			latency=$(ssh netsec.cs.northwestern.edu 'ping -c 3 netsec-projects.cs.northwestern.edu' | tac | head -n 1 | tr '/' '\n' | egrep "[0-9]+(\.[0-9]*)" | awk 'NR==2')
-                        if ! echo $latency | egrep -q "[0-9]+(\.[0-9]*)" ; then
-                                echo "Unable to ping netsec-projects.cs.northwestern.edu"
-                        fi
-                        echo "latency to netsec-projects.cs.northwestern.edu: $latency ms"
+			sshcmd='ping -c 3 netsec-projects.cs.northwestern.edu | tac | head -n 1 | tr "/" "\n" | egrep "[0-9]+(\.[0-9]*)" | awk "NR==2"'
+			if [[ "$2" -eq "3" ]] ; then
+				for port in ${proj3_ports[*]}
+				do
+					sshcmd="${sshcmd} ; nmap -p $port netsec-projects.cs.northwestern.edu | grep \"open\""
+				done
+			fi
+			if [[ "$2" -eq "4" ]] ; then
+				for port in ${proj4_ports[*]}
+				do
+					sshcmd="${sshcmd} ; nmap -p $port netsec-projects.cs.northwestern.edu | grep \"open\""
+				done
+
+			fi
+			if [[ "$2" -eq "5" ]] ; then
+				sshcmd="$sshcmd ; nmap -p 5000 netsec-projects.cs.northwestern.edu | grep -q \"open\""
+			fi
+			echo "Connecting to netsec-projects. . . "
+			echo $(ssh netsec.cs.northwestern.edu "$sshcmd") | sed 's/[0-9][0-9][0-9]*/\n&/g' | sed ':a;N;$!ba;s/\.\n/./' | sed '1s/^/latency: /' | awk '{print $1, $2}'
 		fi
 
 		#run submit script
@@ -75,7 +92,14 @@ if [ -d $1_$2 ] ; then
 
 	#not implemented
 	if [ "$1" = "lab" ] ; then
-		sleep 1
+		#nessus lab may need to be added
+
+		if [ "$2" -eq 1 ] ; then #web attacks
+			echo "Connecting to netsec-demos. . . "
+			sshcmd='ping -c 3 netsec-projects.cs.northwestern.edu | tac | head -n 1 | tr "/" "\n" | egrep "[0-9]+(\.[0-9]*)" | awk "NR==2"'
+			sshcmd="${sshcmd} ; nmap -p 2000 netsec-demos.cs.northwestern.edu | grep \"open\""
+			echo $(ssh netsec.cs.northwestern.edu "$sshcmd") | sed 's/[0-9][0-9][0-9]*/\n&/g' | sed ':a;N;$!ba;s/\.\n/./' | sed '1s/^/latency: /' | awk '{print $1, $2}'
+		fi
 	fi
 else
 	echo "submission files do not exist"
