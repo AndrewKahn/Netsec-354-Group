@@ -23,7 +23,7 @@ echo "$1: $2"
 #Check alive, also a good baseline measurement
 latency=$(ping -c 3 google.com | tac | head -n 1 | tr '/' '\n' | egrep "[0-9]+(\.[0-9]*)" | awk 'NR==2')
 if ! echo $latency | egrep -q "[0-9]+(\.[0-9]*)" ; then
-	echo "Could not reach google.com"
+	echo "Unable to reach google.com"
 	echo "Terminating. . . "
 	exit 1
 fi

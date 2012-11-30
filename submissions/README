@@ -1,0 +1,9 @@
+run_test: test single project submission, see file for usage
+
+all_tests: wrapper around run_test to run all tests and generate log file, ideally would be run via cron at 30 minute intervals
+
+dashboard.py: displays logfile in html format
+
+A cron job should also be set up to delete the log file annually so that it doesn't get too backed up. 
+
+Note: logfile doesn't match current output. 

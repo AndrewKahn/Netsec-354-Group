@@ -1,0 +1,48 @@
+#!/bin/bash
+
+password="a267a@!"
+
+for i in {1..6}
+do
+	if [[ "$i" -eq "3" || "$i" -eq "4" || "$i" -eq "5" ]] ; then
+		result[$i]=$(expect -c "
+			set timeout 10000
+			spawn ./run_test proj $i
+			expect \"*password*\"
+	                send -- \"$password\n\"
+			expect \"*Enter*\"
+                	send -- \"ajk138\n$password\n\"
+                	expect eof")
+	else
+		result[$i]=$(expect -c "
+			set timeout 10000
+			spawn ./run_test proj $i
+			expect \"*Enter*\"
+			send -- \"ajk138\n$password\n\"
+			expect eof")
+	fi
+done
+
+result[7]=$(expect -c "
+	set timeout 10000
+	spawn ./run_test lab 1
+	expect \"*password*\"
+	send -- \"$password\n\"
+	expect eof")
+
+for i in {1..7}
+do
+	if echo ${result[$i]} | egrep -q "failed" || echo ${result[$i]} | egrep -q "Unable" || echo ${result[$i]} | egrep -q "Unable" ; then
+		if echo ${result[$i]} | egrep -q "failed" ; then
+			echo "$i: submission test: $(date "+%d/%m/%Y %H:%M:%S")" >>submit.log
+		fi
+		if echo ${result[$i]} | egrep -q "Unable" ; then
+			echo "$i: ping test: $(date "+%d/%m/%Y %H:%M:%S")" >>submit.log
+		fi
+		if echo ${result[$i]} | egrep -q "closed" ; then
+			echo "$i: port test: $(date "+%d/%m/%Y %H:%M:%S")" >>submit.log
+		fi
+	else
+		echo "$i: ok" >>submit.log
+	fi
+done
