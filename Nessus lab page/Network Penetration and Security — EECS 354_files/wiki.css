@@ -1,0 +1,106 @@
+pre {
+  border: 1px solid #444;
+  background-color: #111;
+  padding: 1em 2em;
+  font-size: 80%;
+  line-height: 1.2em;
+  margin: 2em 3em;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 300px;
+}
+
+.copyright {
+  line-height: 1.1em;
+  font-size: 70%;
+  width: 350px;
+  margin: 4em auto 0em auto;
+  text-align: center;
+  color: #333;
+}
+
+.copyright a {
+  color: #444;
+}
+
+code {
+  color: #99E293;
+  white-space: nowrap;
+}
+
+pre code {
+  white-space: pre;
+}
+
+table {
+  border-collapse: collapse;
+  font-size: 85%;
+  margin: 2em 20px;
+}
+
+table th {
+  padding: 0.5em 1em;
+  background-color: #222;
+  border: 1px solid #444;
+  text-align: left;
+  vertical-align: top;
+}
+
+table td {
+  border: 1px solid #333;
+  padding: 1em;
+  background-color: #111;
+  vertical-align: top;
+}
+
+table .code code {
+  font-size: 95%;
+  line-height: 1.2em;
+  display: block;
+}
+
+.note {
+  font-size: 80%;
+  color: #555;
+  line-height: 1.2em;
+}
+
+.caption {
+    margin: 2em 3em;
+}
+
+.note code { color: #888; }
+.note a { color: #888; }
+
+#content h1 {
+  padding-bottom: 0.3em;
+  border-bottom: 1px dotted #111;
+}
+
+#content h2 {
+  color: #999;
+  padding-bottom: 0.3em;
+  border-bottom: 1px dotted #111;
+}
+
+.memory table {
+  margin: 0.5em 1.5em 0.5em 0em;
+  color: #999;
+  float: left;
+  font-size: 75%;
+}
+
+.memory table td,
+.memory table th {
+  background-color: #222;
+  border-color: #444;
+  padding: 0.4em 1em;
+}
+
+.lines table td {
+  background-color: #111;
+}
+
+.memory table code {
+  color: #fff;
+}

